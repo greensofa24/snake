@@ -30,6 +30,8 @@ let score = 0;
 let apple = {};
 newApple();
 
+let queue = [];
+
 let direction = {
     x: 0,
     y: 0
@@ -65,7 +67,7 @@ function renderSnake() {
     ctx.beginPath();
 
     for (let segment of snake) {
-        ctx.rect(originX + segment.x * tileSize, originY + segment.y * tileSize, tileSize, tileSize);
+        ctx.rect(originX + (segment.x + (width - 1) / 2) * tileSize, originY + (segment.y + (height - 1) / 2) * tileSize, tileSize, tileSize);
     }
 
     ctx.fill();
@@ -74,25 +76,31 @@ function renderSnake() {
 function renderApple() {
     ctx.fillStyle = "#ff0000";
 
-    ctx.fillRect(originX + apple.x * tileSize, originY + apple.y * tileSize, tileSize, tileSize);
+    ctx.fillRect(originX + (apple.x + (width - 1) / 2) * tileSize, originY + (apple.y + (height - 1) / 2) * tileSize, tileSize, tileSize);
 }
 
 function newApple() {
     do {
         apple = {
-            x: Math.floor(Math.random() * width),
-            y: Math.floor(Math.random() * height)
+            x: Math.floor(Math.random() * width) - (width - 1) / 2,
+            y: Math.floor(Math.random() * height) - (height - 1) / 2
         };
     } while (snake.some(segment => collisionCheck(segment, apple)));
 }
 
 function move() {
+    if (queue.length) {
+        direction = queue.shift();
+    }
+
     if (direction.x == 0 && direction.y == 0) {
         return;
     }
 
-    snake.pop();
-    snake.unshift({ ...snake[0] });
+    if (snake.length >= 2) {
+        snake.pop();
+        snake.unshift({ ...snake[0] });
+    }
 
     snake[0].x += direction.x;
     snake[0].y += direction.y;
@@ -122,10 +130,8 @@ function update() {
     }
 
     if (
-        snake[0].x < 0 ||
-        snake[0].x >= width ||
-        snake[0].y < 0 ||
-        snake[0].y >= height
+        Math.abs(snake[0].x) >= (width + 1) / 2 ||
+        Math.abs(snake[0].y) >= (height + 1) / 2
     ) {
         return die();
     }
@@ -146,42 +152,20 @@ function update() {
 
 update();
 
+function equivalent(obj1, obj2) {
+    return obj1.x == obj2.x && obj1.y == obj2.y;
+}
+
 addEventListener("keydown", (event) => {
-    switch (event.key) {
-        case "ArrowUp":
-            if (direction.y != 1) {
-                direction = {
-                    x: 0,
-                    y: -1
-                };
-            }
-            break;
+    let lastDirection = queue.length ? queue[queue.length - 1] : direction;
 
-        case "ArrowDown":
-            if (direction.y != -1) {
-                direction = {
-                    x: 0,
-                    y: 1
-                };
-            }
-            break;
-
-        case "ArrowLeft":
-            if (direction.x != 1) {
-                direction = {
-                    x: -1,
-                    y: 0
-                };
-            }
-            break;
-
-        case "ArrowRight":
-            if (direction.x != -1) {
-                direction = {
-                    x: 1,
-                    y: 0
-                };
-            }
-            break;
+    if (event.key == "ArrowUp" && lastDirection.y != 1) {
+        queue.push({ x: 0, y: -1 });
+    } else if (event.key == "ArrowDown" && lastDirection.y != -1) {
+        queue.push({ x: 0, y: 1 });
+    } else if (event.key == "ArrowLeft" && lastDirection.x != 1) {
+        queue.push({ x: -1, y: 0 });
+    } else if (event.key == "ArrowRight" && lastDirection.x != -1) {
+        queue.push({ x: 1, y: 0 });
     }
 });
