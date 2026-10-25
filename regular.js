@@ -143,8 +143,14 @@ function update() {
 
     ctx.fillText("Score: " + score, 80, innerHeight / 2);
 
+    ctx.lineWidth = 5;
     ctx.strokeStyle = "#04d700";
-    ctx.strokeRect(originX, originY, width * tileSize, height * tileSize);
+    ctx.strokeRect(
+        originX - 2.5,
+        originY - 2.5,
+        width * tileSize + 5,
+        height * tileSize + 5
+    );
 
     renderSnake();
     renderApple();
